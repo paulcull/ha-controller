@@ -85,12 +85,12 @@ void setup()
 {
 
   // start the serial library:
-  Serial.begin(9600);
+  Serial.begin(19200);
   Serial.println("Programme started on " + controllerName + "...");
 
   // Start watchdog
-  wdt_enable(WDTO_8S);
-  Serial.println("Watchdog started at 8 seconds");
+  wdt_enable(WDTO_1S);
+  Serial.println("Watchdog started at 1 seconds");
 
 
   //// Set Pins START ////
@@ -106,18 +106,19 @@ void setup()
     pinMode(relays[i], OUTPUT);
   }
 
-
-
 }
 
 void loop()
 {
 
+  //safely in the loop
+  wdt_reset();
+
   for (int i = 0; i < NUM_RELAYS; i++) 
   {
     buttonStates[i] = digitalRead(buttons[i]);
     if (buttonStates[i] != buttonLastStates[i]) {
-      if (buttonStates[i] == HIGH) {
+      if (buttonStates[i] == LOW) {
         buttonCounters[i]++;
         Serial.println("Button " + String(i) + " pressed for " + String(buttonCounters[i]) + " time.");
         //Now toggle the relay state for the corresponding button
@@ -137,14 +138,6 @@ void loop()
     // Delay a little bit to avoid bouncing
     delay(50);
   }
-
-  
-  for (int i = 0; i < NUM_RELAYS; i++) {
-    Serial.println("Button State " + String(i) + " is " + String(buttonStates[i]));
-    Serial.println("Relay State " + String(i) + " is " + String(relayStates[i]));
-  }
-
-
   
 }
 
