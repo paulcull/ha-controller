@@ -7,8 +7,8 @@ const String controllerName = "HA-Controller1";
 
 // button PINS
 #define NUM_BUTTONS 8
-const int button1 = 49;// was 23 - pushButton on 49
-const int button2 = 25;
+const int button1 = 23;// was 23 - pushButton on 49
+const int button2 = 49; //was 25
 const int button3 = 27;
 const int button4 = 29;
 const int button5 = 31;
@@ -55,6 +55,8 @@ int buttonLastStates[] = {buttonLastState1,buttonLastState2,buttonLastState3,but
 
 // RELAY PIN NUMBERS
 #define NUM_RELAYS 8
+#define RELAY_ON 0
+#define RELAY_OFF 1
 const int relay1 = 22;
 const int relay2 = 24;
 const int relay3 = 26;
@@ -104,6 +106,7 @@ void setup()
     String msg4 = msg3 + " for pin " + String(relays[i]);
     Serial.println(msg4);
     pinMode(relays[i], OUTPUT);
+    digitalWrite(relays[i],RELAY_OFF);
   }
 
 }
@@ -126,7 +129,6 @@ void loop()
         //Set Relay based on new state
         Serial.println("Setting relay " + String(i) + " to " + String(relayStates[i]));
         digitalWrite(relays[i],relayStates[i]);
-        
       } else {
         Serial.println("Button " + String(i) + " released.");
       }
@@ -136,7 +138,7 @@ void loop()
     buttonLastStates[i] = buttonStates[i];
     
     // Delay a little bit to avoid bouncing
-    delay(50);
+    delay(5);
   }
   
 }
