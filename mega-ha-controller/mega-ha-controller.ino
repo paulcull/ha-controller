@@ -1,4 +1,3 @@
-
 // Include Watchdog Controller
 #include <avr/wdt.h>
 
@@ -43,7 +42,7 @@ PubSubClient mqttclient(netclient);
 // button PINS
 #define NUM_BUTTONS 8
 const int button1 = 23;// was 23 - pushButton on 49
-const int button2 = 25; //was 25
+const int button2 = 25;
 const int button3 = 27;
 const int button4 = 29;
 const int button5 = 31;
@@ -52,9 +51,10 @@ const int button7 = 35;
 const int button8 = 37;
 int buttons[] = {button1,button2,button3,button4,button5,button6,button7,button8};
 //int buttonStates[] = {};
-const byte pushButton = 23;// was 49 - button on 23
+const byte pushButton = 49;// was 49 - button on 23
+const int pushButtonRelayMapping = 1;
 
-const int buttonCounter1 = 0;// was 23 - pushButton on 49
+const int buttonCounter1 = 0;
 const int buttonCounter2 = 0;
 const int buttonCounter3 = 0;
 const int buttonCounter4 = 0;
@@ -74,6 +74,7 @@ const int buttonState6 = 0;
 const int buttonState7 = 0;
 const int buttonState8 = 0;
 int buttonStates[] = {buttonState1,buttonState2,buttonState3,buttonState4,buttonState5,buttonState6,buttonState7,buttonState8};
+int pushbuttonState = 0;
 
 // LAST relay state
 const int buttonLastState1 = 0;
@@ -85,13 +86,13 @@ const int buttonLastState6 = 0;
 const int buttonLastState7 = 0;
 const int buttonLastState8 = 0;
 int buttonLastStates[] = {buttonLastState1,buttonLastState2,buttonLastState3,buttonLastState4,buttonLastState5,buttonLastState6,buttonLastState7,buttonLastState8};
-
+int pushbuttonLastState = 0;
 
 
 // RELAY PIN NUMBERS
 #define NUM_RELAYS 8
-#define RELAY_ON 0
-#define RELAY_OFF 1
+#define RELAY_ON 1
+#define RELAY_OFF 0
 const int relay1 = 22;
 const int relay2 = 24;
 const int relay3 = 26;
@@ -124,6 +125,7 @@ void setup()
 
   //// Set Pins START ////
   Serial.println("Setting up I/O Pins...");
+  pinMode(pushButton,INPUT_PULLUP);  
   for (int i = 0; i < NUM_RELAYS; i++) {
     String msg = "setting button " + String(i);
     String msg2 = msg + " for pin " + String(buttons[i]);
@@ -199,26 +201,40 @@ void loop()
     if (buttonStates[i] != buttonLastStates[i]) {
       if (buttonStates[i] == LOW) {
         buttonCounters[i]++;
-        Serial.println("Button " + String(i) + " pressed for " + String(buttonCounters[i]) + " time.");
+        Serial.println("Button " + String(i) + " pressed for " + String(buttonCounters[i]) + " times.");
         //Now toggle the relay state for the corresponding button
         relayStates[i] = !relayStates[i];
         Serial.println("Setting relay " + String(i) + " to " + String(relayStates[i]));
       } else {
-        Serial.println("Button " + String(i) + " released.");
+        Serial.println("Button " + String(i) + " released. Relay state " + String(relayStates[i]));
       }
     }
     // save the current state as the last state,
     //for next time through the loop
     buttonLastStates[i] = buttonStates[i];
-
+        
     //Set Relay based on stored state
     //This allows the state to be set by something else like the mqtt callback controller
     digitalWrite(relays[i],relayStates[i]);
-
-    // Delay a little bit to avoid bouncing
-    delay(5);
+    
   }
-  
+
+  // handle the local pushbutton
+  pushbuttonState = digitalRead(pushButton);
+  if (pushbuttonState != pushbuttonLastState) {
+    if (pushbuttonState == LOW) {
+      relayStates[pushButtonRelayMapping] = !relayStates[pushButtonRelayMapping];
+        Serial.println("PushButton - Setting relay " + String(pushButtonRelayMapping) + " to " + String(relayStates[pushButtonRelayMapping]));
+        digitalWrite(relays[pushButtonRelayMapping],relayStates[pushButtonRelayMapping]);
+    } else {
+        Serial.println("Pushbutton released.");
+    }
+  }
+  pushbuttonLastState = pushbuttonState;
+
+
+  // Delay a little bit to avoid bouncing
+  delay(30);
 }
 
 
