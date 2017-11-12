@@ -119,7 +119,7 @@ void setup()
 {
 
   // start the serial library:
-  Serial.begin(9600);
+  Serial.begin(19200);
   Serial.println("Programme started on " + String(controllerName) + "...");
 
 
@@ -139,53 +139,53 @@ void setup()
   }
 
   
-//  //// NETWORK setup START ////
-//  // start the Ethernet connection:
-//  Serial.println("Getting IP Address...");
-//  if (Ethernet.begin(mac) == 0) {
-//    Serial.println("Failed to configure Ethernet using DHCP");
-//    // no point in carrying on, so do nothing forevermore:
-//    for(;;)
-//      ;
-//  }
-//  Serial.print("Got IP address from DHCP server: ");
-//  // print your local IP address:
-//  Serial.println(Ethernet.localIP());
-//    
-//  delay(1000); // wait a second and test
-//
-//  Serial.print("testing connection to internet...");
-//
-//  if (netclient.connect(server, 80)) {
-//    Serial.println("connected");
-//    netclient.println("GET /search?q=arduino HTTP/1.0");
-//    netclient.println();
-//  } else {
-//    Serial.println("connection failed");
-//  }
-//  //// NETWORK setup END ////
-//
-//  //// MQTT setup START ////
-//  //now connect to the mqtt server
-//  Serial.print("Connecting to MQTT server...");
-//  Serial.println(mqtt_server);
-//  mqttclient.setServer(mqtt_server, mqtt_port);
-//  mqttclient.connect(controllerName);
-//  Serial.print("mqtt connected status...");
-//  Serial.println(mqttclient.connected());
-//  Serial.print("mqtt state...");
-//  Serial.println(mqttclient.state());
-//  reconnect();
-////  Serial.println("Going to put test on MQTT:" + String(mqtt_channel_hb));
-//  Serial.print("sending mqtt msg...");
-//  Serial.println(mqttclient.publish(mqtt_channel_hb,"I'm alive"));
-//  mqttclient.setCallback(callback);
-//  //// MQTT setup END ////
+  //// NETWORK setup START ////
+  // start the Ethernet connection:
+  Serial.println("Getting IP Address...");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed to configure Ethernet using DHCP");
+    // no point in carrying on, so do nothing forevermore:
+    for(;;)
+      ;
+  }
+  Serial.print("Got IP address from DHCP server: ");
+  // print your local IP address:
+  Serial.println(Ethernet.localIP());
+    
+  delay(1000); // wait a second and test
+
+  Serial.print("testing connection to internet...");
+
+  if (netclient.connect(server, 80)) {
+    Serial.println("connected");
+    netclient.println("GET /search?q=arduino HTTP/1.0");
+    netclient.println();
+  } else {
+    Serial.println("connection failed");
+  }
+  //// NETWORK setup END ////
+
+  //// MQTT setup START ////
+  //now connect to the mqtt server
+  Serial.print("Connecting to MQTT server...");
+  Serial.println(mqtt_server);
+  mqttclient.setServer(mqtt_server, mqtt_port);
+  mqttclient.connect(controllerName);
+  Serial.print("mqtt connected status...");
+  Serial.println(mqttclient.connected());
+  Serial.print("mqtt state...");
+  Serial.println(mqttclient.state());
+  reconnect();
+//  Serial.println("Going to put test on MQTT:" + String(mqtt_channel_hb));
+  Serial.print("sending mqtt msg...");
+  Serial.println(mqttclient.publish(mqtt_channel_hb,"I'm alive"));
+  mqttclient.setCallback(callback);
+  //// MQTT setup END ////
 
 
   // Start watchdog
-  wdt_enable(WDTO_2S);
-  Serial.println("Watchdog started at 2 seconds...");
+  wdt_enable(WDTO_8S);
+  Serial.println("Watchdog started at 8 seconds...");
 
 }
 
