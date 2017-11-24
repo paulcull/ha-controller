@@ -91,8 +91,8 @@ int pushbuttonLastState = 0;
 
 // RELAY PIN NUMBERS
 #define NUM_RELAYS 8
-#define RELAY_ON 1
-#define RELAY_OFF 0
+#define RELAY_ON 0
+#define RELAY_OFF 1
 const int relay1 = 22;
 const int relay2 = 24;
 const int relay3 = 26;
@@ -135,7 +135,8 @@ void setup()
     String msg4 = msg3 + " for pin " + String(relays[i]);
     Serial.println(msg4);
     pinMode(relays[i], OUTPUT);
-    digitalWrite(relays[i],RELAY_OFF);
+    relayStates[i] = RELAY_OFF;
+    digitalWrite(relays[i],relayStates[i]);
   }
 
   
