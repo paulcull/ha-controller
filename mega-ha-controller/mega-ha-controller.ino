@@ -44,10 +44,16 @@ int OTAport = 8266;
 //const char* mqtt_server = "openHABianPine64.local";
 const char* mqtt_server = "Pauls-MacBook-Pro.local";
 const int mqtt_port = 1883;
-const String mqtt_channel_pub = "/home/bus/action/";
-const String mqtt_channel_sub = "/home/bus/state";
-const String mqtt_seperator = "/";
-const String mqtt_heartbeat = "/heartbeat";
+
+const char* mqtt_channel_pub = "/home/bus/action/HA-Controller1/";
+const char* mqtt_heartbeat = "/home/bus/state/heartbeat/HA-Controller1";
+const char* mqtt_channel_sub = "/home/bus/state/HA-Controller1/#";
+
+//const String mqtt_channel_pub = "/home/bus/action/";
+//const String mqtt_channel_sub = "/home/bus/state";
+//const String mqtt_seperator = "/";
+//const String mqtt_heartbeat = "/heartbeat";
+
 const char* on_cmd = "ON";
 const char* off_cmd = "OFF";
 const char* toggle_cmd = "TOGGLE";
@@ -321,13 +327,15 @@ void StringToChar(String input) {
 
   // Length (with one extra character for the null terminator)
   int str_len = input.length() + 1; 
+  String output = "";
   
   // Prepare the character array (the buffer) 
   char char_array[str_len];
   
   // Copy it over 
-  String output = str.toCharArray(char_array, str_len);
-  return output;
+  //output = input.toCharArray(char_array, str_len);
+  //return output;
+  return input.toCharArray(char_array, str_len);
   
 }
 
@@ -429,9 +437,9 @@ void sendState(int relay) {
   char buffer[root.measureLength() + 1];
   root.printTo(buffer, sizeof(buffer));
 
-  String _pubTopic = mqtt_channel_pub + controllerName;
-  _pubTopic = _pubTopic + mqtt_seperator;
-  _pubTopic = _pubTopic + String(relay);
+//  String _pubTopic = mqtt_channel_pub + controllerName;
+//  _pubTopic = _pubTopic + mqtt_seperator;
+//  _pubTopic = _pubTopic + String(relay);
   
 //  char* _pubTopic = mqtt_channel_pub; 
 //  _pubTopic = _pubTopic, mqtt_seperator; 
@@ -440,9 +448,9 @@ void sendState(int relay) {
 //  _pubTopic = _pubTopic, String(relay);
 
   if (network_wifi) {
-    mqttwificlient.publish(StringToChar(_pubTopic), buffer, true);      
+    mqttwificlient.publish(mqtt_channel_pub, buffer, true);      
   } else {
-    mqttclient.publish(StringToChar(_pubTopic), buffer, true);  
+    mqttclient.publish(mqtt_channel_pub, buffer, true);  
   }
 }
 
@@ -457,9 +465,8 @@ void sendHeartbeat() {
   char buffer[root.measureLength() + 1];
   root.printTo(buffer, sizeof(buffer));
 
-  String _pubTopic = mqtt_channel_pub + controllerName;
-  _pubTopic = _pubTopic + mqtt_heartbeat;
-
+//  String _pubTopic = mqtt_channel_pub + controllerName;
+//  _pubTopic = _pubTopic + mqtt_heartbeat;
 
 //  char* _pubTopic = mqtt_channel_pub; 
 //  _pubTopic = _pubTopic, mqtt_seperator; 
@@ -467,9 +474,9 @@ void sendHeartbeat() {
 //  _pubTopic = _pubTopic, mqtt_heartbeat;
 
   if (network_wifi) {
-    mqttwificlient.publish(StringToChar(_pubTopic), buffer, true);      
+    mqttwificlient.publish(mqtt_heartbeat, buffer, true);      
   } else {
-    mqttclient.publish(StringToChar(_pubTopic), buffer, true);  
+    mqttclient.publish(mqtt_heartbeat, buffer, true);  
   }
 
 }
