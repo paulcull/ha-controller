@@ -31,8 +31,8 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x01 };
 byte server[] = { 64, 233, 187, 99 }; // Google - for testing network setup
 
 /************ WIFI  Information (CHANGE THESE FOR YOUR SETUP) **************************/
-const char* ssid = "YourSSID"; //type your WIFI information inside the quotes
-const char *wifi_password = "YourWIFIpassword";
+char* ssid = "YourSSID"; //type your WIFI information inside the quotes
+char* wifi_password = "YourWIFIpassword";
 bool network_wifi = false;
 
 /**************************** FOR OTA **************************************************/
@@ -45,9 +45,9 @@ int OTAport = 8266;
 const char* mqtt_server = "Pauls-MacBook-Pro.local";
 const int mqtt_port = 1883;
 
-const char* mqtt_channel_pub = "/home/bus/action/HA-Controller1/";
-const char* mqtt_heartbeat = "/home/bus/state/heartbeat/HA-Controller1";
-const char* mqtt_channel_sub = "/home/bus/state/HA-Controller1/#";
+const char mqtt_channel_pub[] = "/home/bus/action/HA-Controller1/";
+const char mqtt_heartbeat[] = "/home/bus/state/heartbeat/HA-Controller1";
+const char mqtt_channel_sub[] = "/home/bus/state/HA-Controller1/#";
 
 //const String mqtt_channel_pub = "/home/bus/action/";
 //const String mqtt_channel_sub = "/home/bus/state";
