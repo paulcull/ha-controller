@@ -233,36 +233,36 @@ void setup_pins() {
     digitalWrite(relays[i],RELAY_OFF);
   }
   
-}
+
 
 
 /****************************** START SETUP ETHERNET*****************************************/
 void setup_ethernet() {
 
-  Serial.println("Getting IP Address...");
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-    // no point in carrying on, so do nothing forevermore:
-    for(;;)
-      ;
-  }
-  Serial.println("");
-  Serial.println("Ethernet connected");
-  Serial.print("Got IP address from DHCP server ");
-  Serial.print("IP address: ");
-  Serial.println(Ethernet.localIP());
+//   Serial.println("Getting IP Address...");
+//   if (Ethernet.begin(mac) == 0) {
+//     Serial.println("Failed to configure Ethernet using DHCP");
+//     // no point in carrying on, so do nothing forevermore:
+//     for(;;)
+//       ;
+//   }
+//   Serial.println("");
+//   Serial.println("Ethernet connected");
+//   Serial.print("Got IP address from DHCP server ");
+//   Serial.print("IP address: ");
+//   Serial.println(Ethernet.localIP());
 
-  delay(1000); // wait a second and test
+//   delay(1000); // wait a second and test
 
-  Serial.print("Testing connection to internet...");
+//   Serial.print("Testing connection to internet...");
 
-  if (netclient.connect(server, 80)) {
-    Serial.println("connected");
-    netclient.println("GET /search?q=arduino HTTP/1.0");
-    netclient.println();
-  } else {
-    Serial.println("connection failed");
-  }
+//   if (netclient.connect(server, 80)) {
+//     Serial.println("connected");
+//     netclient.println("GET /search?q=arduino HTTP/1.0");
+//     netclient.println();
+//   } else {
+//     Serial.println("connection failed");
+//   }
 
 //  client = netclient;
   
@@ -271,37 +271,37 @@ void setup_ethernet() {
 /********************************** START SETUP WIFI*****************************************/
 void setup_wifi() {
 
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+//   delay(10);
+//   // We start by connecting to a WiFi network
+//   Serial.println();
+//   Serial.print("Connecting to ");
+//   Serial.println(ssid);
   
-//  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, wifi_password);
+// //  WiFi.mode(WIFI_STA);
+//   WiFi.begin(ssid, wifi_password);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+//   while (WiFi.status() != WL_CONNECTED) {
+//     delay(500);
+//     Serial.print(".");
+//   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("Got IP address from DHCP server ");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+//   Serial.println("");
+//   Serial.println("WiFi connected");
+//   Serial.println("Got IP address from DHCP server ");
+//   Serial.print("IP address: ");
+//   Serial.println(WiFi.localIP());
 
-  delay(1000); // wait a second and test
+//   delay(1000); // wait a second and test
 
-  Serial.print("Testing connection to internet...");
+//   Serial.print("Testing connection to internet...");
 
-  if (wificlient.connect(server, 80)) {
-    Serial.println("connected");
-    wificlient.println("GET /search?q=arduino HTTP/1.0");
-    wificlient.println();
-  } else {
-    Serial.println("connection failed");
-  }
+//   if (wificlient.connect(server, 80)) {
+//     Serial.println("connected");
+//     wificlient.println("GET /search?q=arduino HTTP/1.0");
+//     wificlient.println();
+//   } else {
+//     Serial.println("connection failed");
+//   }
 
 //  client = wificlient;
 
@@ -310,16 +310,17 @@ void setup_wifi() {
 /********************************** START SETUP MQTT*****************************************/
 void setup_mqtt() {
 
-  Serial.print("Connecting to MQTT server...");
-  Serial.println(mqtt_server);
-  mqttclient.setServer(mqtt_server, mqtt_port);
-  mqttclient.connect(controllerName);
-  Serial.print("mqtt connected status...");
-  Serial.println(mqttclient.connected());
-  Serial.print("mqtt state...");
-  Serial.println(mqttclient.state());
-  mqttclient.setCallback(callback);
+//   Serial.print("Connecting to MQTT server...");
+//   Serial.println(mqtt_server);
+//   mqttclient.setServer(mqtt_server, mqtt_port);
+//   mqttclient.connect(controllerName);
+//   Serial.print("mqtt connected status...");
+//   Serial.println(mqttclient.connected());
+//   Serial.print("mqtt state...");
+//   Serial.println(mqttclient.state());
+//   mqttclient.setCallback(callback);
 
+  
 }
 
 /********************************** FUNCTION STRING *****************************************/
@@ -342,15 +343,16 @@ void StringToChar(String input) {
 /********************************** START SETUP MQTT*****************************************/
 void setup_wifimqtt() {
 
-  Serial.print("Connecting to MQTT server...");
-  Serial.println(mqtt_server);
-  mqttwificlient.setServer(mqtt_server, mqtt_port);
-  mqttwificlient.connect(controllerName);
-  Serial.print("mqtt connected status...");
-  Serial.println(mqttclient.connected());
-  Serial.print("mqtt state...");
-  Serial.println(mqttclient.state());
-  mqttwificlient.setCallback(callback);
+//   Serial.print("Connecting to MQTT server...");
+//   Serial.println(mqtt_server);
+//   mqttwificlient.setServer(mqtt_server, mqtt_port);
+//   mqttwificlient.connect(controllerName);
+//   Serial.print("mqtt connected status...");
+//   Serial.println(mqttclient.connected());
+//   Serial.print("mqtt state...");
+//   Serial.println(mqttclient.state());
+//   mqttwificlient.setCallback(callback);
+
 
 }
 
@@ -544,18 +546,18 @@ void loop()
   wdt_reset();
 
 
-  if (!mqttclient.connected()) {
-    reconnect();
-  }
+//   if (!mqttclient.connected()) {
+//     reconnect();
+//   }
 
-  if (network_wifi) {
-    if (WiFi.status() != WL_CONNECTED) {
-      delay(1);
-      Serial.print("WIFI Disconnected. Attempting reconnection.");
-      setup_wifi();
-      return;
-    }
-  }
+//   if (network_wifi) {
+//     if (WiFi.status() != WL_CONNECTED) {
+//       delay(1);
+//       Serial.print("WIFI Disconnected. Attempting reconnection.");
+//       setup_wifi();
+//       return;
+//     }
+//   }
 
   for (int i = 0; i < NUM_RELAYS; i++) 
   {
@@ -602,7 +604,7 @@ void loop()
   // Delay a little bit to avoid bouncing
   delay(30);
 
-  mqttclient.loop();
+//   mqttclient.loop();
 
 //  ArduinoOTA.handle();
 
