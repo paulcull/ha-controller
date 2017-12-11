@@ -5,54 +5,29 @@
 
 */
 
-
-
-
-// Include Network Controllers
-#include <Dhcp.h>
-#include <Dns.h>
 #include <Ethernet.h>
-#include <EthernetClient.h>
-#include <WiFi.h>
-#include <WiFiUdp.h>
-#include <WiFiClient.h>
-//#include <WiFiServer.h>
-//#include <ESP8266WiFi.h>
-//#include <ArduinoOTA.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <avr/wdt.h>
 
-
-
 /************ network Setup Information (CHANGE THESE FOR YOUR SETUP) ******************/
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x01 };
-//byte ip[] = { 192, 168, 1, 232 }; // use DHCP as preference
-byte server[] = { 64, 233, 187, 99 }; // Google - for testing network setup
+IPAddress ip( 192, 168, 1, 232 ); // use DHCP as preference
+IPAddress google( 64, 233, 187, 99 ); // Google - for testing network setup
 
 /************ WIFI  Information (CHANGE THESE FOR YOUR SETUP) **************************/
-char* ssid = "YourSSID"; //type your WIFI information inside the quotes
-char* wifi_password = "YourWIFIpassword";
 bool network_wifi = false;
-
-/**************************** FOR OTA **************************************************/
-#define OTApassword "yourOTApassword" //the password you will need to enter to upload remotely via the ArduinoIDE
-int OTAport = 8266;
-
 
 /*********************** MQTT setup Details ********************************************/
 //const char* mqtt_server = "openHABianPine64.local";
-const char* mqtt_server = "Pauls-MacBook-Pro.local";
+//const char* mqtt_server = "Pauls-MacBook-Pro.local";
+//const char* mqtt_server = "192.168.1.95"
+IPAddress mqtt_server(192, 168, 1, 95);
 const int mqtt_port = 1883;
 
-const char mqtt_channel_pub[] = "/home/bus/action/HA-Controller1/";
-const char mqtt_heartbeat[] = "/home/bus/state/heartbeat/HA-Controller1";
-const char mqtt_channel_sub[] = "/home/bus/state/HA-Controller1/#";
-
-//const String mqtt_channel_pub = "/home/bus/action/";
-//const String mqtt_channel_sub = "/home/bus/state";
-//const String mqtt_seperator = "/";
-//const String mqtt_heartbeat = "/heartbeat";
+const char mqtt_channel_pub[] = "/home/bus/action/HA-Controller/";
+const char mqtt_heartbeat[] = "/home/bus/state/heartbeat/HA-Controller";
+const char mqtt_channel_sub[] = "/home/bus/state/HA-Controller/#";
 
 const char* on_cmd = "ON";
 const char* off_cmd = "OFF";
@@ -65,15 +40,12 @@ const int BUFFER_SIZE = JSON_OBJECT_SIZE(10);
 
 
 /**************************** define the clients ***************************************/
-EthernetClient netclient;
-WiFiClient wificlient;
-//Client client;
-//PubSubClient mqttclient(client);
-PubSubClient mqttclient(netclient);
-PubSubClient mqttwificlient(wificlient);
+EthernetClient ethClient;
+PubSubClient mqttclient(ethClient);
 
 /**************************** Borad Details ********************************************/
 const char* controllerName = "HA-Controller1";
+int uptime = 0;
 
 
 /**************************** PIN Details **********************************************/
@@ -93,9 +65,9 @@ const byte pushButton = 49;
 const int pushButtonRelayMapping = 1;
 
 // RELAY PIN NUMBERS
-#define NUM_RELAYS 8
-#define RELAY_ON 1
-#define RELAY_OFF 0
+const int NUM_RELAYS = 8;
+const int RELAY_ON = 0;
+const int RELAY_OFF = 1;
 const int relay1 = 22;
 const int relay2 = 24;
 const int relay3 = 26;
@@ -106,7 +78,7 @@ const int relay7 = 34;
 const int relay8 = 36;
 int relays[] = {relay1,relay2,relay3,relay4,relay5,relay6,relay7,relay8};
 
-
+ 
 /****************** State Register Details **********************************************/
 
 const int buttonCounter1 = 0;
@@ -120,28 +92,28 @@ const int buttonCounter8 = 0;
 int buttonCounters[] = {buttonCounter1,buttonCounter2,buttonCounter3,buttonCounter4,buttonCounter5,buttonCounter6,buttonCounter7,buttonCounter8};
 
 // CURRENT relay state
-const int buttonState1 = 0;
-const int buttonState2 = 0;
-const int buttonState3 = 0;
-const int buttonState4 = 0;
-const int buttonState5 = 0;
-const int buttonState6 = 0;
-const int buttonState7 = 0;
-const int buttonState8 = 0;
+const int buttonState1 = LOW;
+const int buttonState2 = LOW;
+const int buttonState3 = LOW;
+const int buttonState4 = LOW;
+const int buttonState5 = LOW;
+const int buttonState6 = LOW;
+const int buttonState7 = LOW;
+const int buttonState8 = LOW;
 int buttonStates[] = {buttonState1,buttonState2,buttonState3,buttonState4,buttonState5,buttonState6,buttonState7,buttonState8};
-int pushbuttonState = 0;
+int pushbuttonState = LOW;
 
 // LAST relay state
-const int buttonLastState1 = 0;
-const int buttonLastState2 = 0;
-const int buttonLastState3 = 0;
-const int buttonLastState4 = 0;
-const int buttonLastState5 = 0;
-const int buttonLastState6 = 0;
-const int buttonLastState7 = 0;
-const int buttonLastState8 = 0;
+const int buttonLastState1 = LOW;
+const int buttonLastState2 = LOW;
+const int buttonLastState3 = LOW;
+const int buttonLastState4 = LOW;
+const int buttonLastState5 = LOW;
+const int buttonLastState6 = LOW;
+const int buttonLastState7 = LOW;
+const int buttonLastState8 = LOW;
 int buttonLastStates[] = {buttonLastState1,buttonLastState2,buttonLastState3,buttonLastState4,buttonLastState5,buttonLastState6,buttonLastState7,buttonLastState8};
-int pushbuttonLastState = 0;
+int pushbuttonLastState = LOW;
 
 
 // INITIAL relay state
@@ -165,48 +137,30 @@ void setup()
   Serial.println("Boot Started on " + String(controllerName) + "...");
 
   // Pin mapping setup
-  Serial.println("Boot Start Board Config...");
-  setup_pins();
-  Serial.println("Boot Start Board Config...Done");
-
-  // Network setup 
-  // TODO: can I get a generic type to assign netclient or wificlient ?
+//  Serial.println("Boot Start Board Config...");
+//  setup_pins();
+//  Serial.println("Boot Start Board Config...Done");
 
   Serial.println("Boot Start Network...");
-//  if (<<test for ethernet plugin>>) {
-    Serial.println("Boot Start Network...Ethernet...");
-    network_wifi = false;
-    setup_ethernet();
-    Serial.println("Boot Start Network...Ethernet...Done");
-//  } else {
-//    Serial.println("Boot Start Network...Wifi...");
-//    network_wifi = true;
-//    setup_wifi();
-//    Serial.println("Boot Start Network...Wifi...Done");
-//  }
-  
-  
-  
+  Serial.println("Boot Start Network...Ethernet...");
+//  network_wifi = false;
+  setup_ethernet();
+  delay(1000); // wait a second
+  Serial.println("Boot Start Network...Ethernet...Done");  
+
+
   
   // MQTT setup
   Serial.println("Boot Start MQTT...");
-  if (network_wifi) {
-    setup_wifimqtt();
-  } else {
-    setup_mqtt();  
-  }
+  setup_mqtt();  
+  delay(1000); // wait a second
   Serial.println("Boot Start MQTT...Done");
 
-  //OTA SETUP
-  Serial.println("Boot Start OTA...");
-  setup_OTA();
-  Serial.println("Boot Start OTA...Done");
-
   // Start watchdog
-  Serial.println("Boot Start watchdog...");
-  wdt_enable(WDTO_8S);
-  Serial.println("Watchdog started at 8 seconds...");
-  Serial.println("Boot Start watchdog...Done");
+//  Serial.println("Boot Start watchdog...");
+//  wdt_enable(WDTO_4S);
+//  Serial.println("Watchdog started at 4 seconds...");
+//  Serial.println("Boot Start watchdog...Done");
 
   // Finish
   Serial.println("Boot Completed on " + String(controllerName));
@@ -222,13 +176,16 @@ void setup_pins() {
   Serial.println("Setting up I/O Pins...");
   pinMode(pushButton,INPUT_PULLUP);  
   for (int i = 0; i < NUM_RELAYS; i++) {
-    String msg = "setting button " + String(i);
+    String msg = "  setting button " + String(i);
     String msg2 = msg + " for pin " + String(buttons[i]);
     Serial.println(msg2);
     pinMode(buttons[i], INPUT_PULLUP); // INPUT for Switch - INPUT_PULLUP for buttons
-    String msg3 = "setting relay " + String(i);
+    String msg3 = "  setting relay " + String(i);
     String msg4 = msg3 + " for pin " + String(relays[i]);
     Serial.println(msg4);
+    relayStates[i] = RELAY_OFF;
+    buttonStates[i] = RELAY_OFF;
+    buttonLastStates[i] = RELAY_OFF;
     pinMode(relays[i], OUTPUT);
     digitalWrite(relays[i],RELAY_OFF);
   }
@@ -241,82 +198,38 @@ void setup_ethernet() {
 
   Serial.println("Getting IP Address...");
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-    // no point in carrying on, so do nothing forevermore:
-    for(;;)
-      ;
+    Serial.println("  Failed to configure Ethernet using DHCP, using default IP");
+    Ethernet.begin(mac,ip);
   }
-  Serial.println("");
-  Serial.println("Ethernet connected");
-  Serial.print("Got IP address from DHCP server ");
-  Serial.print("IP address: ");
+  Serial.println("  Ethernet connected");
+  Serial.print("  IP address: ");
   Serial.println(Ethernet.localIP());
 
-  delay(1000); // wait a second and test
+  delay(500); // wait half a second and test
 
-  Serial.print("Testing connection to internet...");
+  Serial.print("  Testing connection to internet...");
 
-  if (netclient.connect(server, 80)) {
-    Serial.println("connected");
-    netclient.println("GET /search?q=arduino HTTP/1.0");
-    netclient.println();
+  if (ethClient.connect(google, 80)) {
+    Serial.println("  connected");
+    ethClient.println("  GET /search?q=arduino HTTP/1.0");
+    ethClient.println();
   } else {
-    Serial.println("connection failed");
+    Serial.println("  connection failed");
   }
-
-//  client = netclient;
   
 }
     
-/********************************** START SETUP WIFI*****************************************/
-void setup_wifi() {
-
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  
-//  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, wifi_password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("Got IP address from DHCP server ");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  delay(1000); // wait a second and test
-
-  Serial.print("Testing connection to internet...");
-
-  if (wificlient.connect(server, 80)) {
-    Serial.println("connected");
-    wificlient.println("GET /search?q=arduino HTTP/1.0");
-    wificlient.println();
-  } else {
-    Serial.println("connection failed");
-  }
-
-//  client = wificlient;
-
-}
 
 /********************************** START SETUP MQTT*****************************************/
 void setup_mqtt() {
 
-  Serial.print("Connecting to MQTT server...");
+  Serial.print("  Connecting to MQTT server...");
   Serial.println(mqtt_server);
   mqttclient.setServer(mqtt_server, mqtt_port);
-  mqttclient.connect(controllerName);
-  Serial.print("mqtt connected status...");
+//  mqttclient.connect(controllerName);
+  Serial.print("  mqtt connected status...");
   Serial.println(mqttclient.connected());
-  Serial.print("mqtt state...");
+  Serial.print("  mqtt state...");
   Serial.println(mqttclient.state());
   mqttclient.setCallback(callback);
 
@@ -339,21 +252,6 @@ void StringToChar(String input) {
   
 }
 
-/********************************** START SETUP MQTT*****************************************/
-void setup_wifimqtt() {
-
-  Serial.print("Connecting to MQTT server...");
-  Serial.println(mqtt_server);
-  mqttwificlient.setServer(mqtt_server, mqtt_port);
-  mqttwificlient.connect(controllerName);
-  Serial.print("mqtt connected status...");
-  Serial.println(mqttclient.connected());
-  Serial.print("mqtt state...");
-  Serial.println(mqttclient.state());
-  mqttwificlient.setCallback(callback);
-
-}
-
 /********************************** START CALLBACK*****************************************/
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
@@ -361,7 +259,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("] ");
 
   char message[length + 1];
-  for (int i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++) {
     message[i] = (char)payload[i];
   }
   message[length] = '\0';
@@ -432,26 +330,14 @@ void sendState(int relay) {
   StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
 
+  root["controller"] = controllerName;
+  root["relay"] = String(relay);
   root["state"] = (relayStates[relay]) ? on_cmd : off_cmd;
 
   char buffer[root.measureLength() + 1];
   root.printTo(buffer, sizeof(buffer));
 
-//  String _pubTopic = mqtt_channel_pub + controllerName;
-//  _pubTopic = _pubTopic + mqtt_seperator;
-//  _pubTopic = _pubTopic + String(relay);
-  
-//  char* _pubTopic = mqtt_channel_pub; 
-//  _pubTopic = _pubTopic, mqtt_seperator; 
-//  _pubTopic = _pubTopic, controllerName; 
-//  _pubTopic = _pubTopic, mqtt_seperator; 
-//  _pubTopic = _pubTopic, String(relay);
-
-  if (network_wifi) {
-    mqttwificlient.publish(mqtt_channel_pub, buffer, true);      
-  } else {
-    mqttclient.publish(mqtt_channel_pub, buffer, true);  
-  }
+  mqttclient.publish(mqtt_channel_pub, buffer, true);  
 }
 
 /***************************** START SEND HEARTBEAT *****************************************/
@@ -460,24 +346,14 @@ void sendHeartbeat() {
   StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
 
+  root["controller"] = controllerName;
+  root["uptime"] = uptime;
   root["alive"] = on_cmd;
 
   char buffer[root.measureLength() + 1];
   root.printTo(buffer, sizeof(buffer));
 
-//  String _pubTopic = mqtt_channel_pub + controllerName;
-//  _pubTopic = _pubTopic + mqtt_heartbeat;
-
-//  char* _pubTopic = mqtt_channel_pub; 
-//  _pubTopic = _pubTopic, mqtt_seperator; 
-//  _pubTopic = _pubTopic, controllerName;
-//  _pubTopic = _pubTopic, mqtt_heartbeat;
-
-  if (network_wifi) {
-    mqttwificlient.publish(mqtt_heartbeat, buffer, true);      
-  } else {
-    mqttclient.publish(mqtt_heartbeat, buffer, true);  
-  }
+  mqttclient.publish(mqtt_heartbeat, buffer, true);  
 
 }
 
@@ -486,53 +362,24 @@ void reconnect() {
   Serial.println("Checking MQTT connection...");
   // Loop until we're reconnected
   while (!mqttclient.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    Serial.print("  Attempting MQTT connection...");
     // Attempt to connect
-    if (mqttclient.connect(controllerName)) {
-      Serial.println("connected... Subscribing to " + String(mqtt_channel_sub));
-      //mqttclient.publish(mqtt_channel_hb,"I'm alive"); 
+//    if (mqttclient.connect(controllerName)) {
+    if (mqttclient.connect("PC_TEST")) {
+      Serial.println("  connected... Subscribing to " + String(mqtt_channel_sub));
+      mqttclient.publish(mqtt_channel_pub,"I'm alive"); 
       // ... and subscribe to topic
       mqttclient.subscribe(mqtt_channel_sub);
     } else {
-      Serial.print("failed, rc=");
+      Serial.print("  failed, rc=");
       Serial.print(mqttclient.state());
       Serial.println(" try again in 5 seconds");
+      Serial.print("  status is=");
+      Serial.println(mqttclient.connected());
       // Wait 5 seconds before retrying
       delay(5000);
     }
   }
-}
-
-
-/********************************** START SETUP PINS*****************************************/
-void setup_OTA() {
-
-//  ArduinoOTA.setPort(OTAport);
-//  // Hostname defaults to esp8266-[ChipID]
-//  ArduinoOTA.setHostname(cpntrollerName);
-//
-//  // No authentication by default
-//  ArduinoOTA.setPassword((const char *)OTApassword);
-//
-//  ArduinoOTA.onStart([]() {
-//    Serial.println("Starting OTA Update");
-//  });
-//  ArduinoOTA.onEnd([]() {
-//    Serial.println("\nEnd");
-//  });
-//  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-//    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-//  });
-//  ArduinoOTA.onError([](ota_error_t error) {
-//    Serial.printf("Error[%u]: ", error);
-//    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-//    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-//    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-//    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-//    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-//  });
-//  ArduinoOTA.begin();
-  
 }
 
 
@@ -543,19 +390,10 @@ void loop()
   //safely in the loop
   wdt_reset();
 
-
   if (!mqttclient.connected()) {
     reconnect();
   }
-
-  if (network_wifi) {
-    if (WiFi.status() != WL_CONNECTED) {
-      delay(1);
-      Serial.print("WIFI Disconnected. Attempting reconnection.");
-      setup_wifi();
-      return;
-    }
-  }
+//  mqttclient.loop();
 
   for (int i = 0; i < NUM_RELAYS; i++) 
   {
@@ -600,11 +438,8 @@ void loop()
 
 
   // Delay a little bit to avoid bouncing
-  delay(30);
+  delay(50);
 
-  mqttclient.loop();
-
-//  ArduinoOTA.handle();
 
   
 }
